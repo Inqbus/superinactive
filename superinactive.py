@@ -14,36 +14,22 @@ import argparse
 import signal
 import threading
 import pathlib
-
-
-try:
-    import xmlrpc.client as xmlrpclib
-except ImportError:
-    import xmlrpclib
+import xmlrpc.client as xmlrpclib
 
 from supervisor import childutils
 
 DEFAULT_TIMEOUT = 30
 
-
-parser = argparse.ArgumentParser(
-        description='Supervisor plugin to monitor a file '
-                    'activity and restart programs on inactivity')
+parser = argparse.ArgumentParser(description='Supervisor plugin to monitor a file activity and restart programs on inactivity')
 
 monitor_group = parser.add_argument_group('file monitoring')
-monitor_group.add_argument('path', metavar='path',
-        help='file path to monitor for inactivity')
-monitor_group.add_argument('timeout', metavar='timeout', type=int,
-        help='timeout (seconds) for inactivity (default {})')
+monitor_group.add_argument('path', metavar='path', help='file path to monitor for inactivity')
+monitor_group.add_argument('timeout', metavar='timeout', type=int, help='timeout (seconds) for inactivity (default {})')
 
 program_group = parser.add_argument_group('programs')
-program_group.add_argument('program', metavar='prog', nargs='*',
-        help="supervisor program name to restart")
-program_group.add_argument('-g', '--group', action='append', default=[],
-        help='supervisor group name to restart')
-program_group.add_argument('-a', '--any', action='store_true',
-        help='restart any child of this supervisor')
-
+program_group.add_argument('program', metavar='prog', nargs='*', help="supervisor program name to restart")
+program_group.add_argument('-g', '--group', action='append', default=[], help='supervisor group name to restart')
+program_group.add_argument('-a', '--any', action='store_true', help='restart any child of this supervisor')
 
 
 class Plugin(object):
@@ -55,10 +41,10 @@ class Plugin(object):
         self.do_monitor = True
 
         self.file = pathlib.Path(self.args.path)
-        assert self.file.exists(), f'No such file: {self.file}'
+        assert self.file.exists(), 'No such file: {self.file}'
         self.delta_time = datetime.timedelta(seconds=self.args.timeout)
 
-        signal.signal(signal.SIGINT,  self.handle_term)
+        signal.signal(signal.SIGINT, self.handle_term)
         signal.signal(signal.SIGTERM, self.handle_term)
         self.rpc_init()
 
@@ -104,10 +90,10 @@ class Plugin(object):
         statename = proc['statename']
         pid = proc['pid']
 
-        return ((statename == 'STARTING' or statename == 'RUNNING') and
-                (self.args.any or name in self.args.program or group in self.args.group) and
-                pid != os.getpid())
+        correct_state = (statename == 'STARTING' or statename == 'RUNNING')
+        correct_name = (self.args.any or name in self.args.program or group in self.args.group)
 
+        return correct_state and correct_name and pid != os.getpid()
 
     def restart_programs(self):
         self.info('restarting programs')
@@ -136,7 +122,6 @@ class Plugin(object):
                     restart_names.remove(name)
             time.sleep(0.1)
 
-
     def commence_restart(self):
         if not self.pre_restarting_lock.acquire(False):
             self.info('detected inactivity, but locked')
@@ -162,10 +147,12 @@ class Plugin(object):
                 self.commence_restart()
             last_time = new_time
 
+
 def main():
     args = parser.parse_args()
     plugin = Plugin(args)
     plugin.monitor()
+
 
 if __name__ == '__main__':
     main()
