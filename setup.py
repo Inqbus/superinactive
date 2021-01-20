@@ -3,8 +3,7 @@ from setuptools import setup
 setup(name='superinactive',
       version='0.1',
       license='MIT',
-      description='Supervisor plugin to monito the activity of a file and restart '
-                  'programs on inactivity',
+      description='Supervisor plugin to monitor the activity of a file and restart programs on inactivity',
       author='Dr. Volker Jaenisch',
       author_email='volker.jaenisch@inqbus.de',
       url='https://github.com/inqbus/superinactive',
